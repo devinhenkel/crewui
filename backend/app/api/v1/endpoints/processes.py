@@ -34,9 +34,24 @@ class ProcessResponse(ProcessBase):
         from_attributes = True
 
 @router.get("/", response_model=List[ProcessResponse])
-def get_processes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all processes with pagination"""
-    processes = db.query(Process).offset(skip).limit(limit).all()
+def get_processes(
+    skip: int = 0, 
+    limit: int = 100, 
+    search: str = None,
+    db: Session = Depends(get_db)
+):
+    """Get all processes with pagination and search"""
+    query = db.query(Process)
+    
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (Process.name.ilike(search_filter)) |
+            (Process.description.ilike(search_filter)) |
+            (Process.process_type.ilike(search_filter))
+        )
+    
+    processes = query.offset(skip).limit(limit).all()
     return processes
 
 @router.post("/", response_model=ProcessResponse, status_code=status.HTTP_201_CREATED)

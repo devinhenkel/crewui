@@ -62,7 +62,7 @@ export function AgentLibrary() {
             Manage your AI agents for CrewAI workflows
           </p>
         </div>
-        <Button onClick={() => setShowCreateForm(true)}>
+        <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
           <Plus className="h-4 w-4 mr-2" />
           Create Agent
         </Button>
@@ -116,7 +116,7 @@ export function AgentLibrary() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-12">
-              <div className="mx-auto h-12 w-12 text-gray-400">
+              <div className="mx-auto h-12 w-12 text-blue-400">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
@@ -127,7 +127,7 @@ export function AgentLibrary() {
               </p>
               {!searchTerm && (
                 <div className="mt-6">
-                  <Button onClick={() => setShowCreateForm(true)}>
+                  <Button onClick={() => setShowCreateForm(true)} className="bg-blue-600 hover:bg-blue-700">
                     <Plus className="h-4 w-4 mr-2" />
                     Create Agent
                   </Button>

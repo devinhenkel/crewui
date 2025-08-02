@@ -100,7 +100,7 @@ export function TaskLibrary() {
         </div>
         <Button
           onClick={() => setShowForm(true)}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
         >
           <Plus className="h-4 w-4" />
           <span>Create Task</span>
@@ -213,14 +213,14 @@ export function TaskLibrary() {
       {!loading && !tasks.length && !searchTerm && (
         <Card className="text-center py-12">
           <CardContent>
-            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Plus className="h-8 w-8 text-gray-400" />
+            <div className="mx-auto w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <Plus className="h-8 w-8 text-green-400" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
             <p className="text-gray-600 mb-4">
               Get started by creating your first task for your workflow.
             </p>
-            <Button onClick={() => setShowForm(true)}>
+            <Button onClick={() => setShowForm(true)} className="bg-green-600 hover:bg-green-700">
               Create Your First Task
             </Button>
           </CardContent>
