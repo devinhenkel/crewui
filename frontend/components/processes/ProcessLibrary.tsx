@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { Process, ProcessCreate, ProcessUpdate } from '@/types/process';
 import { useProcessStore } from '@/lib/stores/processStore';
 import { ProcessForm } from './ProcessForm';
+import { ProcessBuilder } from './ProcessBuilder';
 import { ProcessCard } from './ProcessCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Search, AlertCircle, Loader2, GitBranch } from 'lucide-react';
+import { Plus, Search, AlertCircle, Loader2, GitBranch, Settings } from 'lucide-react';
 
 export function ProcessLibrary() {
   const {
@@ -27,6 +28,8 @@ export function ProcessLibrary() {
   const [editingProcess, setEditingProcess] = useState<Process | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [viewingProcess, setViewingProcess] = useState<Process | null>(null);
+  const [showBuilder, setShowBuilder] = useState(false);
+  const [buildingProcess, setBuildingProcess] = useState<Process | null>(null);
 
   useEffect(() => {
     fetchProcesses();
@@ -72,6 +75,21 @@ export function ProcessLibrary() {
     setShowForm(false);
     setEditingProcess(null);
     setViewingProcess(null);
+    setShowBuilder(false);
+    setBuildingProcess(null);
+  };
+
+  const handleOpenBuilder = (process: Process) => {
+    setBuildingProcess(process);
+    setShowBuilder(true);
+  };
+
+  const handleSaveBuilder = async (configuration: any) => {
+    if (buildingProcess) {
+      await updateProcess(buildingProcess.id, { configuration });
+      setShowBuilder(false);
+      setBuildingProcess(null);
+    }
   };
 
   if (error) {
@@ -137,6 +155,20 @@ export function ProcessLibrary() {
         </div>
       )}
 
+      {/* Process Builder */}
+      {showBuilder && buildingProcess && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-h-[90vh] overflow-y-auto w-full max-w-6xl">
+            <ProcessBuilder
+              process={buildingProcess}
+              onSave={handleSaveBuilder}
+              onCancel={handleCancelForm}
+              loading={loading}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Process Detail Modal */}
       {viewingProcess && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -152,14 +184,26 @@ export function ProcessLibrary() {
                     </CardDescription>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setViewingProcess(null)}
-                  className="h-8 w-8 p-0"
-                >
-                  ×
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenBuilder(viewingProcess)}
+                    className="h-8 px-3 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                    title="Configure Process"
+                  >
+                    <Settings className="h-4 w-4 mr-1" />
+                    Configure
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setViewingProcess(null)}
+                    className="h-8 w-8 p-0"
+                  >
+                    ×
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -261,6 +305,7 @@ export function ProcessLibrary() {
               onDelete={handleDeleteProcess}
               onView={handleViewProcess}
               onExecute={handleExecuteProcess}
+              onConfigure={handleOpenBuilder}
             />
           ))}
         </div>

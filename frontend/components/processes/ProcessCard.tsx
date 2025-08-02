@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Process } from '@/types/process';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye, Play, GitBranch, ArrowRight } from 'lucide-react';
+import { Edit, Trash2, Eye, Play, GitBranch, ArrowRight, Settings } from 'lucide-react';
 
 interface ProcessCardProps {
   process: Process;
@@ -12,9 +12,10 @@ interface ProcessCardProps {
   onDelete: (id: number) => void;
   onView: (process: Process) => void;
   onExecute: (id: number) => void;
+  onConfigure: (process: Process) => void;
 }
 
-export function ProcessCard({ process, onEdit, onDelete, onView, onExecute }: ProcessCardProps) {
+export function ProcessCard({ process, onEdit, onDelete, onView, onExecute, onConfigure }: ProcessCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
 
@@ -88,6 +89,15 @@ export function ProcessCard({ process, onEdit, onDelete, onView, onExecute }: Pr
               title="View details"
             >
               <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onConfigure(process)}
+              className="h-8 w-8 p-0 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              title="Configure process"
+            >
+              <Settings className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
