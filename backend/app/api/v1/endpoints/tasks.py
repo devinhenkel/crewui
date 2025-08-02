@@ -38,9 +38,24 @@ class TaskResponse(TaskBase):
         from_attributes = True
 
 @router.get("/", response_model=List[TaskResponse])
-def get_tasks(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all tasks with pagination"""
-    tasks = db.query(Task).offset(skip).limit(limit).all()
+def get_tasks(
+    skip: int = 0, 
+    limit: int = 100, 
+    search: str = None,
+    db: Session = Depends(get_db)
+):
+    """Get all tasks with pagination and search"""
+    query = db.query(Task)
+    
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (Task.name.ilike(search_filter)) |
+            (Task.description.ilike(search_filter)) |
+            (Task.expected_output.ilike(search_filter))
+        )
+    
+    tasks = query.offset(skip).limit(limit).all()
     return tasks
 
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
