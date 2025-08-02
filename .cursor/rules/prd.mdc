@@ -1,0 +1,341 @@
+---
+description:
+globs:
+alwaysApply: false
+---
+# CrewAI Configuration Platform - Product Requirements Document
+
+## 1. Executive Summary
+
+### Product Vision
+
+A full-stack web application that enables users to visually configure, manage, and execute CrewAI workflows through an intuitive interface. Users can build libraries of AI agents, define tasks, create processes, and monitor execution in real-time.
+
+### Key Value Propositions
+
+- **Visual Configuration**: No-code interface for CrewAI setup
+- **Reusable Components**: Build once, use many times approach for agents and tasks
+- **Real-time Monitoring**: Live execution feedback and file management
+- **Scalable Architecture**: Support for complex multi-agent workflows
+
+## 2. Product Overview
+
+### Target Users
+
+- AI/ML engineers and researchers
+- Business analysts and process automation specialists
+- Development teams implementing AI workflows
+- Organizations looking to streamline AI agent orchestration
+
+### Core Use Cases
+
+1. **Agent Library Management**: Create and maintain reusable AI agents
+2. **Task Definition**: Configure specific tasks with detailed parameters
+3. **Process Orchestration**: Design sequential or hierarchical workflows
+4. **Execution Monitoring**: Real-time tracking of crew execution
+5. **Output Management**: Access and download generated files
+
+## 3. Technical Architecture
+
+### Frontend Stack
+
+- **Framework**: Next.js 14+ (App Router)
+- **Styling**: Tailwind CSS
+- **UI Components**: shadCN/ui
+- **State Management**: Zustand or React Context
+- **Real-time Communication**: WebSocket/Server-Sent Events
+- **Forms**: React Hook Form with Zod validation
+
+### Backend Stack
+
+- **Framework**: FastAPI (Python)
+- **Database**: PostgreSQL with SQLAlchemy ORM
+- **Task Queue**: Celery with Redis
+- **AI Framework**: CrewAI
+- **File Storage**: Local filesystem or S3-compatible storage
+- **WebSocket**: FastAPI WebSocket support
+
+### Infrastructure
+
+- **Containerization**: Docker
+- **Reverse Proxy**: Nginx
+- **Process Management**: Docker Compose or Kubernetes
+- **Monitoring**: Logging with structured outputs
+
+## 4. Feature Requirements
+
+### 4.1 Agent Management
+
+### Core Features
+
+- **Agent Creation Form**
+    - Role field (required, text input)
+    - Goal field (required, textarea)
+    - Backstory field (required, textarea)
+    - Additional CrewAI parameters (tools, llm, etc.)
+- **Agent Library**
+    - Searchable and filterable list view
+    - Agent preview cards with key information
+    - Edit and delete functionality
+    - Duplicate agent feature
+    - Import/export capabilities
+
+### Technical Requirements
+
+- RESTful API endpoints for CRUD operations
+- Database schema with appropriate indexing
+- Input validation and sanitization
+- Audit logging for changes
+
+### 4.2 Task Management
+
+### Core Features
+
+- **Task Creation Form**
+    - Description (required, textarea)
+    - Expected output (required, textarea)
+    - Agent assignment (dropdown from agent library)
+    - Tools specification
+    - Context and additional parameters
+- **Task Library**
+    - Organized view of all tasks
+    - Search and filter capabilities
+    - Task templates and duplication
+    - Dependency visualization
+
+### Technical Requirements
+
+- Flexible schema supporting all CrewAI task parameters
+- Relationship mapping to agents
+- Version control for task definitions
+
+### 4.3 Process Configuration
+
+### Core Features
+
+- **Process Builder Interface**
+    - Drag-and-drop task arrangement
+    - Visual workflow representation
+    - Process type selection (Sequential/Hierarchical)
+    - Task ordering for sequential processes
+    - Agent-task association management
+- **Process Management**
+    - Save and load process configurations
+    - Process templates and sharing
+    - Validation rules (all tasks must have agents)
+    - Process versioning
+
+### Technical Requirements
+
+- Graph-based data structure for process representation
+- Validation engine for process completeness
+- Visual workflow renderer (using libraries like React Flow)
+
+### 4.4 Execution Engine
+
+### Core Features
+
+- **Execution Interface**
+    - Run button (enabled only when process is valid)
+    - Real-time console output streaming
+    - Execution status indicators
+    - Stop/pause functionality
+- **Virtual Console**
+    - Syntax-highlighted output
+    - Scrollable with auto-scroll option
+    - Export console logs
+    - Timestamp markers
+
+### Technical Requirements
+
+- Asynchronous task execution with Celery
+- WebSocket connection for real-time updates
+- Process isolation and resource management
+- Error handling and recovery mechanisms
+
+### 4.5 File Management
+
+### Core Features
+
+- **Output File Handling**
+    - Automatic file detection from CrewAI output
+    - File type icons and previews
+    - Download functionality
+    - File organization by execution run
+- **File Storage**
+    - Temporary storage for execution outputs
+    - Cleanup policies for old files
+    - File sharing capabilities
+
+### Technical Requirements
+
+- Secure file serving with proper headers
+- MIME type detection and validation
+- Storage quota management
+- File cleanup background tasks
+
+## 5. Database Schema
+
+### Core Tables
+
+### Agents
+
+```sql
+CREATE TABLE agents (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    role TEXT NOT NULL,
+    goal TEXT NOT NULL,
+    backstory TEXT NOT NULL,
+    tools JSONB DEFAULT '[]',
+    llm_config JSONB DEFAULT '{}',
+    additional_params JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+```
+
+### Tasks
+
+```sql
+CREATE TABLE tasks (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    expected_output TEXT NOT NULL,
+    tools JSONB DEFAULT '[]',
+    context JSONB DEFAULT '{}',
+    additional_params JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+```
+
+### Processes
+
+```sql
+CREATE TABLE processes (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    process_type VARCHAR(50) NOT NULL, -- 'sequential' or 'hierarchical'
+    configuration JSONB NOT NULL, -- stores the full process config
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+```
+
+### Executions
+
+```sql
+CREATE TABLE executions (
+    id SERIAL PRIMARY KEY,
+    process_id INTEGER REFERENCES processes(id),
+    status VARCHAR(50) NOT NULL, -- 'running', 'completed', 'failed', 'stopped'
+    output_path VARCHAR(500),
+    console_log TEXT,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP
+);
+
+```
+
+## 6. API Specifications
+
+### Agent Endpoints
+
+- `GET /api/agents` - List all agents
+- `POST /api/agents` - Create new agent
+- `GET /api/agents/{id}` - Get agent details
+- `PUT /api/agents/{id}` - Update agent
+- `DELETE /api/agents/{id}` - Delete agent
+
+### Task Endpoints
+
+- `GET /api/tasks` - List all tasks
+- `POST /api/tasks` - Create new task
+- `GET /api/tasks/{id}` - Get task details
+- `PUT /api/tasks/{id}` - Update task
+- `DELETE /api/tasks/{id}` - Delete task
+
+### Process Endpoints
+
+- `GET /api/processes` - List all processes
+- `POST /api/processes` - Create new process
+- `GET /api/processes/{id}` - Get process details
+- `PUT /api/processes/{id}` - Update process
+- `DELETE /api/processes/{id}` - Delete process
+- `POST /api/processes/{id}/execute` - Execute process
+
+### Execution Endpoints
+
+- `GET /api/executions` - List executions
+- `GET /api/executions/{id}` - Get execution details
+- `POST /api/executions/{id}/stop` - Stop execution
+- `GET /api/executions/{id}/files` - List output files
+- `GET /api/executions/{id}/files/{filename}` - Download file
+
+### WebSocket Endpoints
+
+- `/ws/execution/{execution_id}` - Real-time execution updates
+
+## 7. User Experience Requirements
+
+### 7.1 Navigation Structure
+
+```
+Dashboard
+├── Agents
+│   ├── Agent Library
+│   └── Create Agent
+├── Tasks
+│   ├── Task Library
+│   └── Create Task
+├── Processes
+│   ├── Process Library
+│   ├── Create Process
+│   └── Process Builder
+└── Executions
+    ├── Execution History
+    └── Active Executions
+
+```
+
+### 7.2 Key User Flows
+
+### Agent Creation Flow
+
+1. Navigate to “Create Agent”
+2. Fill required fields (role, goal, backstory)
+3. Configure optional parameters
+4. Preview agent configuration
+5. Save to library
+
+### Process Building Flow
+
+1. Navigate to “Create Process”
+2. Select process type (Sequential/Hierarchical)
+3. Add tasks from library
+4. Assign agents to tasks
+5. Configure task order (if sequential)
+6. Validate process completeness
+7. Save process configuration
+
+### Execution Flow
+
+1. Select process from library
+2. Review process configuration
+3. Click “Run” button
+4. Monitor real-time console output
+5. Access generated files
+6. Review execution results
+
+### 7.3 Responsive Design Requirements
+
+- Mobile-friendly interface (768px and up)
+- Tablet optimization for process builder
+- Desktop-first approach for complex configurations
+- Progressive disclosure for advanced features
