@@ -40,9 +40,24 @@ class AgentResponse(AgentBase):
         from_attributes = True
 
 @router.get("/", response_model=List[AgentResponse])
-def get_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all agents with pagination"""
-    agents = db.query(Agent).offset(skip).limit(limit).all()
+def get_agents(
+    skip: int = 0, 
+    limit: int = 100, 
+    search: str = None,
+    db: Session = Depends(get_db)
+):
+    """Get all agents with pagination and search"""
+    query = db.query(Agent)
+    
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (Agent.name.ilike(search_filter)) |
+            (Agent.role.ilike(search_filter)) |
+            (Agent.goal.ilike(search_filter))
+        )
+    
+    agents = query.offset(skip).limit(limit).all()
     return agents
 
 @router.post("/", response_model=AgentResponse, status_code=status.HTTP_201_CREATED)

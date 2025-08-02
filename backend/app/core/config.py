@@ -26,7 +26,12 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE: int = 10485760  # 10MB
     
     # CORS
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000", 
+        "http://127.0.0.1:3000",
+        "http://0.0.0.0:3000",
+        "*"  # Allow all origins in development
+    ]
     
     # Logging
     LOG_LEVEL: str = "INFO"
