@@ -1,12 +1,12 @@
 // API Configuration
 export const config = {
-  // In development, use the server's IP. In production, use relative URLs
+  // In development, use localhost. In production, use relative URLs
   apiBaseUrl: process.env.NODE_ENV === 'production' 
     ? '/api/v1'  // Use relative URL in production (proxy)
-    : 'http://192.168.1.24:8000/api/v1', // Use server IP in development
+    : 'http://localhost:8000/api/v1', // Use localhost in development
   
   // Fallback for server-side rendering
-  fallbackApiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://192.168.1.24:8000/api/v1'
+  fallbackApiUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 };
 
 // Get the appropriate API URL
