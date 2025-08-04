@@ -12,7 +12,7 @@ fi
 cleanup() {
     echo ""
     echo "🛑 Stopping development environment..."
-    docker-compose down
+    docker compose down
     exit 0
 }
 
@@ -21,6 +21,6 @@ trap cleanup SIGINT SIGTERM
 
 # Start the services
 echo "📦 Starting services with Docker Compose..."
-docker-compose up --build
+docker compose up --build
 
 # This will keep running until interrupted 

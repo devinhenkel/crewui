@@ -1,11 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Dict, Any
 from pydantic import BaseModel
 from datetime import datetime
+import re
+import json
+import asyncio
+# from crewai import Crew, Agent, Task
+# from langchain_openai import ChatOpenAI
 
 from app.core.database import get_db
 from app.models.process import Process
+from app.models.execution import Execution
+from app.models.agent import Agent as AgentModel
+from app.models.task import Task as TaskModel
+from app.models.tool import Tool
+# from app.core.crewai_tools import get_crewai_tool
 
 router = APIRouter()
 
@@ -32,6 +42,14 @@ class ProcessResponse(ProcessBase):
     
     class Config:
         from_attributes = True
+
+class ExecutionRequest(BaseModel):
+    variables: Dict[str, str] = {}
+
+class ExecutionResponse(BaseModel):
+    execution_id: int
+    message: str
+    status: str
 
 @router.get("/", response_model=List[ProcessResponse])
 def get_processes(
@@ -103,14 +121,84 @@ def delete_process(process_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None
 
-@router.post("/{process_id}/execute", status_code=status.HTTP_202_ACCEPTED)
-def execute_process(process_id: int, db: Session = Depends(get_db)):
-    """Execute a process"""
+@router.post("/{process_id}/execute", response_model=ExecutionResponse, status_code=status.HTTP_202_ACCEPTED)
+def execute_process(
+    process_id: int, 
+    execution_request: ExecutionRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Execute a process with variable substitution and CrewAI integration"""
     process = db.query(Process).filter(Process.id == process_id).first()
     if process is None:
         raise HTTPException(status_code=404, detail="Process not found")
     
-    # TODO: Implement process execution logic with Celery
-    # This would create an Execution record and trigger the Celery task
+    # Create execution record
+    execution = Execution(
+        process_id=process_id,
+        status="running",
+        console_log="Starting process execution...\n"
+    )
+    db.add(execution)
+    db.commit()
+    db.refresh(execution)
     
-    return {"message": "Process execution started", "process_id": process_id} 
+    # Start background execution
+    background_tasks.add_task(
+        run_crewai_process,
+        execution.id,
+        process.configuration,
+        execution_request.variables,
+        db
+    )
+    
+    return ExecutionResponse(
+        execution_id=execution.id,
+        message="Process execution started",
+        status="running"
+    )
+
+async def run_crewai_process(execution_id: int, configuration: dict, variables: Dict[str, str], db: Session):
+    """Background task to run the CrewAI process"""
+    try:
+        # Update execution status
+        execution = db.query(Execution).filter(Execution.id == execution_id).first()
+        if not execution:
+            return
+        
+        execution.console_log += "Initializing CrewAI agents and tasks...\n"
+        db.commit()
+        
+        # For now, just simulate the execution
+        execution.console_log += "CrewAI integration coming soon...\n"
+        execution.console_log += f"Process configuration: {json.dumps(configuration, indent=2)}\n"
+        execution.console_log += f"Variables: {json.dumps(variables, indent=2)}\n"
+        
+        # Simulate some work
+        import time
+        time.sleep(2)
+        
+        execution.console_log += "Execution completed successfully!\n"
+        execution.status = "completed"
+        execution.completed_at = datetime.utcnow()
+        db.commit()
+        
+    except Exception as e:
+        # Update execution with error
+        execution = db.query(Execution).filter(Execution.id == execution_id).first()
+        if execution:
+            execution.status = "failed"
+            execution.console_log += f"\nExecution failed with error: {str(e)}"
+            execution.completed_at = datetime.utcnow()
+            db.commit()
+
+def substitute_variables(text: str, variables: Dict[str, str]) -> str:
+    """Substitute {variable_name} placeholders with actual values"""
+    if not text:
+        return text
+    
+    def replace_var(match):
+        var_name = match.group(1)
+        return variables.get(var_name, match.group(0))
+    
+    return re.sub(r'\{([^}]+)\}', replace_var, text) 

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { Process, ProcessCreate, ProcessUpdate, ProcessFilters } from '@/types/process';
+import { ExecutionRequest } from '@/types/execution';
 import { getApiUrl } from '@/lib/config';
 
 const API_BASE_URL = getApiUrl();
@@ -39,9 +40,10 @@ export const processesApi = {
     await axios.delete(`${API_BASE_URL}/processes/${id}`);
   },
 
-  // Execute a process
-  async executeProcess(id: number): Promise<{ message: string; process_id: number }> {
-    const response = await axios.post(`${API_BASE_URL}/processes/${id}/execute`);
+  // Execute a process with variables
+  async executeProcess(id: number, variables: Record<string, string> = {}): Promise<{ execution_id: number; message: string; status: string }> {
+    const executionRequest: ExecutionRequest = { variables };
+    const response = await axios.post(`${API_BASE_URL}/processes/${id}/execute`, executionRequest);
     return response.data;
   },
 }; 

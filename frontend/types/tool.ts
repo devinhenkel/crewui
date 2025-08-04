@@ -34,10 +34,12 @@ export interface Tool {
 export interface ToolCreate {
   name: string;
   description: string;
-  tool_type: 'langchain' | 'custom' | 'builtin';
+  tool_type: 'langchain' | 'custom' | 'builtin' | 'crewai';
   category: string;
   langchain_tool_name?: string;
   langchain_params?: Record<string, any>;
+  crewai_tool_name?: string;
+  crewai_params?: Record<string, any>;
   python_code?: string;
   custom_params?: Record<string, any>;
   is_active?: boolean;
@@ -51,10 +53,12 @@ export interface ToolCreate {
 export interface ToolUpdate {
   name?: string;
   description?: string;
-  tool_type?: 'langchain' | 'custom' | 'builtin';
+  tool_type?: 'langchain' | 'custom' | 'builtin' | 'crewai';
   category?: string;
   langchain_tool_name?: string;
   langchain_params?: Record<string, any>;
+  crewai_tool_name?: string;
+  crewai_params?: Record<string, any>;
   python_code?: string;
   custom_params?: Record<string, any>;
   is_active?: boolean;

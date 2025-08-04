@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Process, ProcessCreate, ProcessUpdate, ProcessFilters } from '@/types/process';
+import { ExecutionRequest } from '@/types/execution';
 import { processesApi } from '@/lib/api/processes';
 
 interface ProcessStore {
@@ -14,7 +15,7 @@ interface ProcessStore {
   createProcess: (process: ProcessCreate) => Promise<void>;
   updateProcess: (id: number, process: ProcessUpdate) => Promise<void>;
   deleteProcess: (id: number) => Promise<void>;
-  executeProcess: (id: number) => Promise<void>;
+  executeProcess: (id: number, variables?: Record<string, string>) => Promise<{ execution_id: number }>;
   setSelectedProcess: (process: Process | null) => void;
   clearError: () => void;
 }
@@ -101,16 +102,18 @@ export const useProcessStore = create<ProcessStore>((set, get) => ({
     }
   },
 
-  executeProcess: async (id: number) => {
+  executeProcess: async (id: number, variables: Record<string, string> = {}) => {
     set({ loading: true, error: null });
     try {
-      await processesApi.executeProcess(id);
+      const result = await processesApi.executeProcess(id, variables);
       set({ loading: false });
+      return result;
     } catch (error) {
       set({ 
         error: error instanceof Error ? error.message : 'Failed to execute process', 
         loading: false 
       });
+      throw error;
     }
   },
 

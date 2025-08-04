@@ -58,8 +58,15 @@ export function ProcessLibrary() {
     await deleteProcess(id);
   };
 
-  const handleExecuteProcess = async (id: number) => {
-    await executeProcess(id);
+  const handleExecuteProcess = async (id: number, variables?: Record<string, string>) => {
+    try {
+      const result = await executeProcess(id, variables);
+      console.log('Process execution started:', result);
+      return result;
+    } catch (error) {
+      console.error('Failed to execute process:', error);
+      throw error;
+    }
   };
 
   const handleEditProcess = (process: Process) => {
