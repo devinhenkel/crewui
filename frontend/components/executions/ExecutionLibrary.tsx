@@ -25,7 +25,7 @@ export function ExecutionLibrary() {
 
   useEffect(() => {
     fetchExecutions();
-  }, [fetchExecutions]);
+  }, []);
 
   const handleRefresh = () => {
     fetchExecutions();
