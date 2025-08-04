@@ -3,12 +3,13 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Users, ListTodo, GitBranch, Play } from 'lucide-react';
+import { Users, ListTodo, GitBranch, Play, Wrench } from 'lucide-react';
 
 const navigation = [
   { name: 'Agents', href: '/agents', icon: Users, color: 'blue' },
   { name: 'Tasks', href: '/tasks', icon: ListTodo, color: 'green' },
   { name: 'Processes', href: '/processes', icon: GitBranch, color: 'purple' },
+  { name: 'Tools', href: '/tools', icon: Wrench, color: 'red' },
   { name: 'Executions', href: '/executions', icon: Play, color: 'orange' },
 ];
 
@@ -33,6 +34,7 @@ export function Navigation() {
                   blue: isActive ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:text-blue-700 hover:bg-blue-50',
                   green: isActive ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:text-green-700 hover:bg-green-50',
                   purple: isActive ? 'bg-purple-100 text-purple-700' : 'text-gray-600 hover:text-purple-700 hover:bg-purple-50',
+                  red: isActive ? 'bg-red-100 text-red-700' : 'text-gray-600 hover:text-red-700 hover:bg-red-50',
                   orange: isActive ? 'bg-orange-100 text-orange-700' : 'text-gray-600 hover:text-orange-700 hover:bg-orange-50',
                 };
                 

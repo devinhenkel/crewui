@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { agentsApi } from '@/lib/api/agents';
 import { tasksApi } from '@/lib/api/tasks';
+import { ToolSelector } from './ToolSelector';
 
 interface ProcessBuilderProps {
   process: Process;
@@ -47,7 +48,7 @@ interface ProcessBuilderProps {
 interface ProcessStepWithDetails extends ProcessStep {
   task?: Task;
   agent?: Agent;
-  tools?: string[];
+  tools?: number[];
 }
 
 export function ProcessBuilder({ process, onSave, onCancel, loading = false }: ProcessBuilderProps) {
@@ -81,7 +82,7 @@ export function ProcessBuilder({ process, onSave, onCancel, loading = false }: P
                   ...step,
                   task,
                   agent,
-                  tools: agent?.tools || []
+                  tools: step.tools || []
                 };
               })
             );
@@ -96,7 +97,7 @@ export function ProcessBuilder({ process, onSave, onCancel, loading = false }: P
                   ...step,
                   task,
                   agent,
-                  tools: agent?.tools || []
+                  tools: step.tools || []
                 };
               })
             );
@@ -146,8 +147,7 @@ export function ProcessBuilder({ process, onSave, onCancel, loading = false }: P
             ...step, 
             ...updates,
             task: updates.task_id ? tasks.find(t => t.id === updates.task_id) : step.task,
-            agent: updates.agent_id ? agents.find(a => a.id === updates.agent_id) : step.agent,
-            tools: updates.agent_id ? agents.find(a => a.id === updates.agent_id)?.tools || [] : step.tools
+            agent: updates.agent_id ? agents.find(a => a.id === updates.agent_id) : step.agent
           }
         : step
     ));
@@ -244,7 +244,8 @@ export function ProcessBuilder({ process, onSave, onCancel, loading = false }: P
             task_id: step.task_id,
             agent_id: step.agent_id,
             order: step.order,
-            dependencies: step.dependencies || []
+            dependencies: step.dependencies || [],
+            tools: step.tools || []
           }))
         };
         await onSave(config);
@@ -254,7 +255,8 @@ export function ProcessBuilder({ process, onSave, onCancel, loading = false }: P
             id: step.id,
             task_id: step.task_id,
             agent_id: step.agent_id,
-            dependencies: step.dependencies || []
+            dependencies: step.dependencies || [],
+            tools: step.tools || []
           })),
           hierarchy
         };
@@ -429,34 +431,16 @@ export function ProcessBuilder({ process, onSave, onCancel, loading = false }: P
                                   </Select>
                                 </div>
 
-                                {/* Tools Display */}
+                                {/* Tools Selection */}
                                 <div>
                                   <Label className="text-sm font-medium text-gray-700 mb-1">
                                     Tools
                                   </Label>
-                                  <div className="flex items-center space-x-2">
-                                    <Wrench className="h-4 w-4 text-orange-600" />
-                                    <span className="text-sm text-gray-600">
-                                      {step.tools?.length || 0} tools available
-                                    </span>
-                                  </div>
-                                  {step.tools && step.tools.length > 0 && (
-                                    <div className="mt-1 flex flex-wrap gap-1">
-                                      {step.tools.slice(0, 3).map((tool, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="inline-block px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full"
-                                        >
-                                          {typeof tool === 'string' ? tool : 'Tool'}
-                                        </span>
-                                      ))}
-                                      {step.tools.length > 3 && (
-                                        <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                                          +{step.tools.length - 3} more
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
+                                  <ToolSelector
+                                    selectedTools={step.tools || []}
+                                    onToolsChange={(toolIds) => updateStep(step.id, { tools: toolIds })}
+                                    disabled={!step.agent_id}
+                                  />
                                 </div>
                               </div>
 

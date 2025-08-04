@@ -35,6 +35,7 @@ export interface ProcessStep {
   agent_id: number;
   order?: number;
   dependencies?: string[];
+  tools?: number[]; // Array of tool IDs
 }
 
 export interface SequentialProcessConfig {
