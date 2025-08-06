@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Process } from '@/types/process';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -27,26 +27,77 @@ export function VariableInputDialog({
 }: VariableInputDialogProps) {
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [processVariables, setProcessVariables] = useState<string[]>([]);
 
-  // Extract variables from process configuration
-  const extractVariables = (process: Process): string[] => {
+  // Extract variables from process configuration - looking in agent and task properties
+  const extractVariables = async (process: Process): Promise<string[]> => {
     const vars = new Set<string>();
-    const regex = /\{([^}]+)\}/g;
+    const regex = /\{\{([^}]+)\}\}/g;
     
-    // Check process configuration
-    const configStr = JSON.stringify(process.configuration);
-    let match;
-    while ((match = regex.exec(configStr)) !== null) {
-      vars.add(match[1]);
+    try {
+      // Get all agents and tasks to check their properties
+      const [agentsResponse, tasksResponse] = await Promise.all([
+        fetch('/api/v1/agents/'),
+        fetch('/api/v1/tasks/')
+      ]);
+      
+      const agents = await agentsResponse.json();
+      const tasks = await tasksResponse.json();
+      
+      // Get steps from process configuration
+      const config = process.configuration as any;
+      const steps = config.steps || config.tasks || [];
+      
+      // Check each step's agent and task properties for variables
+      steps.forEach((step: any) => {
+        // Find the agent for this step
+        const agent = agents.find((a: any) => a.id === step.agent_id);
+        if (agent) {
+          // Check agent properties for variables
+          [agent.role, agent.goal, agent.backstory].forEach(text => {
+            if (text) {
+              let match;
+              const regex = /\{\{([^}]+)\}\}/g;
+              while ((match = regex.exec(text)) !== null) {
+                vars.add(match[1].trim());
+              }
+            }
+          });
+        }
+        
+        // Find the task for this step
+        const task = tasks.find((t: any) => t.id === step.task_id);
+        if (task) {
+          // Check task properties for variables
+          [task.description, task.expected_output].forEach(text => {
+            if (text) {
+              let match;
+              const regex = /\{\{([^}]+)\}\}/g;
+              while ((match = regex.exec(text)) !== null) {
+                vars.add(match[1].trim());
+              }
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.error('Error extracting variables:', error);
     }
     
     return Array.from(vars);
   };
 
-  const processVariables = process ? extractVariables(process) : [];
+  // Load process variables when process changes
+  useEffect(() => {
+    if (process) {
+      extractVariables(process).then(setProcessVariables);
+    } else {
+      setProcessVariables([]);
+    }
+  }, [process]);
 
   useEffect(() => {
-    if (isOpen && process) {
+    if (isOpen && process && processVariables.length >= 0) {
       // Initialize variables with empty values
       const initialVars: Record<string, string> = {};
       processVariables.forEach(variable => {

@@ -28,6 +28,7 @@ dependencies = [
     "langchain-openai>=0.0.2",
     "openai>=1.7.1,<2.0.0",
     "langchain-community>=0.0.10",
+    "setuptools>=80.9.0",
 ]
 
 [project.optional-dependencies]

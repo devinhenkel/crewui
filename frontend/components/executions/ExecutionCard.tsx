@@ -82,7 +82,7 @@ export function ExecutionCard({ execution, onViewDetails }: ExecutionCardProps) 
           <div className="flex items-center space-x-2">
             {getStatusIcon(execution.status)}
             <CardTitle className="text-lg">
-              {execution.process?.name || `Process ${execution.process_id}`}
+              {execution.process?.name || `Process ${execution.process_id}`} - Execution #{execution.id}
             </CardTitle>
           </div>
           <Badge className={getStatusColor(execution.status)}>

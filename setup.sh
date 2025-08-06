@@ -9,7 +9,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     echo "❌ Docker Compose is not installed. Please install Docker Compose first."
     exit 1
 fi
@@ -74,7 +74,7 @@ echo ""
 echo "Next steps:"
 echo "1. Edit backend/.env and add your OpenAI API key"
 echo "2. Start the development environment:"
-echo "   docker-compose up -d"
+echo "   docker compose up -d"
 echo ""
 echo "3. Access the application:"
 echo "   Frontend: http://localhost:3000"
@@ -82,7 +82,7 @@ echo "   Backend API: http://localhost:8000"
 echo "   API Docs: http://localhost:8000/docs"
 echo ""
 echo "To stop the environment:"
-echo "   docker-compose down"
+echo "   docker compose down"
 echo ""
 echo "To run backend locally with uv:"
 echo "   cd backend && uv run uvicorn main:app --reload" 

@@ -33,7 +33,7 @@ export function ProcessLibrary() {
 
   useEffect(() => {
     fetchProcesses();
-  }, [fetchProcesses]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);

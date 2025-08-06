@@ -37,11 +37,29 @@ class ExecutionResponse(ExecutionBase):
 class ExecutionWithProcess(ExecutionResponse):
     process: dict
 
-@router.get("/", response_model=List[ExecutionResponse])
+@router.get("/", response_model=List[ExecutionWithProcess])
 def get_executions(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    """Get all executions with pagination"""
+    """Get all executions with pagination and process details"""
     executions = db.query(Execution).order_by(Execution.started_at.desc()).offset(skip).limit(limit).all()
-    return executions
+    
+    # Add process details to each execution
+    result = []
+    for execution in executions:
+        # Get process details
+        process = db.query(Process).filter(Process.id == execution.process_id).first()
+        process_data = {
+            "id": process.id,
+            "name": process.name,
+            "description": process.description,
+            "process_type": process.process_type
+        } if process else {}
+        
+        result.append({
+            **execution.__dict__,
+            "process": process_data
+        })
+    
+    return result
 
 @router.get("/{execution_id}", response_model=ExecutionWithProcess)
 def get_execution(execution_id: int, db: Session = Depends(get_db)):
@@ -108,8 +126,26 @@ def stop_execution(execution_id: int, db: Session = Depends(get_db)):
     
     return execution
 
-@router.get("/process/{process_id}", response_model=List[ExecutionResponse])
+@router.get("/process/{process_id}", response_model=List[ExecutionWithProcess])
 def get_process_executions(process_id: int, db: Session = Depends(get_db)):
-    """Get all executions for a specific process"""
+    """Get all executions for a specific process with process details"""
     executions = db.query(Execution).filter(Execution.process_id == process_id).order_by(Execution.started_at.desc()).all()
-    return executions 
+    
+    # Add process details to each execution
+    result = []
+    for execution in executions:
+        # Get process details
+        process = db.query(Process).filter(Process.id == execution.process_id).first()
+        process_data = {
+            "id": process.id,
+            "name": process.name,
+            "description": process.description,
+            "process_type": process.process_type
+        } if process else {}
+        
+        result.append({
+            **execution.__dict__,
+            "process": process_data
+        })
+    
+    return result 

@@ -111,7 +111,7 @@ export function ExecutionMonitor({ executionId, onClose }: ExecutionMonitorProps
           <div className="flex items-center space-x-2">
             {getStatusIcon(currentExecution.status)}
             <CardTitle className="text-lg">
-              {currentExecution.process?.name || `Process ${currentExecution.process_id}`}
+              {currentExecution.process?.name || `Process ${currentExecution.process_id}`} - Execution #{currentExecution.id}
             </CardTitle>
           </div>
           <div className="flex items-center space-x-2">

@@ -159,7 +159,7 @@ def execute_process(
     )
 
 async def run_crewai_process(execution_id: int, configuration: dict, variables: Dict[str, str], db: Session):
-    """Background task to run the CrewAI process"""
+    """Background task to run the CrewAI process with variable substitution"""
     try:
         # Update execution status
         execution = db.query(Execution).filter(Execution.id == execution_id).first()
@@ -167,12 +167,58 @@ async def run_crewai_process(execution_id: int, configuration: dict, variables: 
             return
         
         execution.console_log += "Initializing CrewAI agents and tasks...\n"
+        execution.console_log += f"Variables to substitute: {json.dumps(variables, indent=2)}\n"
         db.commit()
         
-        # For now, just simulate the execution
-        execution.console_log += "CrewAI integration coming soon...\n"
-        execution.console_log += f"Process configuration: {json.dumps(configuration, indent=2)}\n"
-        execution.console_log += f"Variables: {json.dumps(variables, indent=2)}\n"
+        # Get process steps
+        steps = configuration.get('steps', configuration.get('tasks', []))
+        
+        # Process each step and apply variable substitution
+        processed_agents = []
+        processed_tasks = []
+        
+        for step in steps:
+            execution.console_log += f"Processing step {step.get('id', 'unknown')}...\n"
+            
+            # Get agent and apply variable substitution
+            agent = db.query(AgentModel).filter(AgentModel.id == step.get('agent_id')).first()
+            if agent:
+                # Create a copy of agent with substituted variables
+                substituted_agent = {
+                    'id': agent.id,
+                    'name': agent.name,
+                    'role': substitute_variables(agent.role, variables),
+                    'goal': substitute_variables(agent.goal, variables),
+                    'backstory': substitute_variables(agent.backstory, variables),
+                    'tools': agent.tools,
+                    'llm_config': agent.llm_config
+                }
+                processed_agents.append(substituted_agent)
+                execution.console_log += f"  Agent '{agent.name}' processed with variable substitutions\n"
+            
+            # Get task and apply variable substitution
+            task = db.query(TaskModel).filter(TaskModel.id == step.get('task_id')).first()
+            if task:
+                # Create a copy of task with substituted variables
+                substituted_task = {
+                    'id': task.id,
+                    'name': task.name,
+                    'description': substitute_variables(task.description, variables),
+                    'expected_output': substitute_variables(task.expected_output, variables),
+                    'tools': task.tools,
+                    'context': task.context
+                }
+                processed_tasks.append(substituted_task)
+                execution.console_log += f"  Task '{task.name}' processed with variable substitutions\n"
+        
+        # Log the processed configuration
+        execution.console_log += "\nProcessed configuration with variable substitutions:\n"
+        execution.console_log += f"Agents: {json.dumps(processed_agents, indent=2)}\n"
+        execution.console_log += f"Tasks: {json.dumps(processed_tasks, indent=2)}\n"
+        
+        # TODO: Here you would actually create and run the CrewAI crew
+        # For now, simulate the execution
+        execution.console_log += "\nCrewAI execution simulation (integration coming soon)...\n"
         
         # Simulate some work
         import time
@@ -193,12 +239,12 @@ async def run_crewai_process(execution_id: int, configuration: dict, variables: 
             db.commit()
 
 def substitute_variables(text: str, variables: Dict[str, str]) -> str:
-    """Substitute {variable_name} placeholders with actual values"""
+    """Substitute {{variable_name}} placeholders with actual values"""
     if not text:
         return text
     
     def replace_var(match):
-        var_name = match.group(1)
+        var_name = match.group(1).strip()
         return variables.get(var_name, match.group(0))
     
-    return re.sub(r'\{([^}]+)\}', replace_var, text) 
+    return re.sub(r'\{\{([^}]+)\}\}', replace_var, text) 
