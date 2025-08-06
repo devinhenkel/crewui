@@ -1,13 +1,38 @@
 # CrewAI Configuration Platform - Backend
 
-FastAPI backend for the CrewAI Configuration Platform.
+FastAPI backend for the CrewAI Configuration Platform with integrated CrewAI support.
 
 ## Development Setup
 
 ### Prerequisites
 
-- Python 3.9+
+- **Python 3.12** (required for CrewAI compatibility)
+- [pyenv](https://github.com/pyenv/pyenv) (recommended for Python version management)
 - [uv](https://github.com/astral-sh/uv) (recommended) or pip
+
+### Python 3.12 Setup
+
+This project requires Python 3.12 for CrewAI compatibility. If you're using a different Python version:
+
+1. **Install pyenv** (if not already installed):
+   ```bash
+   # On macOS
+   brew install pyenv
+   
+   # On Linux
+   curl https://pyenv.run | bash
+   ```
+
+2. **Install Python 3.12**:
+   ```bash
+   pyenv install 3.12.7
+   pyenv local 3.12.7
+   ```
+
+3. **Run the migration script** (automated setup):
+   ```bash
+   ./scripts/migrate_to_python312.sh
+   ```
 
 ### Using uv (Recommended)
 
@@ -24,15 +49,15 @@ FastAPI backend for the CrewAI Configuration Platform.
 
 3. **Run the development server**:
    ```bash
-   uv run uvicorn main:app --reload
+   ./scripts/dev.sh
    ```
 
 ### Using pip (Alternative)
 
 1. **Create virtual environment**:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
    ```
 
 2. **Install dependencies**:
@@ -45,6 +70,28 @@ FastAPI backend for the CrewAI Configuration Platform.
    uvicorn main:app --reload
    ```
 
+## CrewAI Integration
+
+This backend includes full CrewAI integration for AI agent orchestration:
+
+- **CrewAI**: Multi-agent orchestration framework
+- **LangChain**: LLM framework integration
+- **OpenAI**: LLM provider support
+
+### Testing CrewAI Integration
+
+After setup, verify CrewAI is working:
+
+```bash
+python test_crewai_integration.py
+```
+
+This will test:
+- Python 3.12 compatibility
+- CrewAI installation
+- LangChain integration
+- Basic agent creation
+
 ## Environment Configuration
 
 1. Copy the environment template:
@@ -55,7 +102,7 @@ FastAPI backend for the CrewAI Configuration Platform.
 2. Edit `.env` and configure:
    - Database connection
    - Redis connection
-   - OpenAI API key
+   - OpenAI API key (required for CrewAI)
    - Other settings
 
 ## API Documentation
@@ -102,8 +149,12 @@ backend/
 │   ├── api/v1/endpoints/    # API route handlers
 │   ├── core/               # Core configurations
 │   └── models/             # Database models
+├── scripts/
+│   ├── dev.sh              # Development server script
+│   └── migrate_to_python312.sh  # Migration script
 ├── pyproject.toml          # Project configuration and dependencies
 ├── uv.lock                 # Locked dependency versions
 ├── main.py                 # Application entry point
+├── test_crewai_integration.py  # CrewAI integration test
 └── .env                    # Environment variables
-``` 
+```
