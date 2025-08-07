@@ -69,7 +69,7 @@ export function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps) {
   };
 
   return (
-    <Card className="w-full max-w-2xl">
+    <Card className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl">
       <CardHeader>
         <CardTitle>{agent ? 'Edit Agent' : 'Create New Agent'}</CardTitle>
         <CardDescription>

@@ -66,7 +66,7 @@ export function ProcessForm({ process, onSubmit, onCancel, loading = false }: Pr
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>

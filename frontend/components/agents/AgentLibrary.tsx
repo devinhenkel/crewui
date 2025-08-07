@@ -101,7 +101,7 @@ export function AgentLibrary() {
       {/* Create/Edit Form */}
       {(showCreateForm || editingAgent) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg max-h-[90vh] overflow-y-auto w-full max-w-7xl">
             <AgentForm
               agent={editingAgent || undefined}
               onSuccess={handleFormSuccess}

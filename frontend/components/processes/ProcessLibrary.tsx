@@ -151,7 +151,7 @@ export function ProcessLibrary() {
       {/* Form */}
       {(showForm || editingProcess) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg max-h-[90vh] overflow-y-auto w-full max-w-7xl">
             <ProcessForm
               process={editingProcess || undefined}
               onSubmit={editingProcess ? handleUpdateProcess : handleCreateProcess}
@@ -179,7 +179,7 @@ export function ProcessLibrary() {
       {/* Process Detail Modal */}
       {viewingProcess && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <Card className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[90vh] overflow-y-auto">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
