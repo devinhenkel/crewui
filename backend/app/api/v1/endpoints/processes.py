@@ -183,33 +183,75 @@ async def run_crewai_process(execution_id: int, configuration: dict, variables: 
             # Get agent and apply variable substitution
             agent = db.query(AgentModel).filter(AgentModel.id == step.get('agent_id')).first()
             if agent:
-                # Create a copy of agent with substituted variables
+                # Load actual tool details for agent tools
+                agent_tool_details = []
+                if agent.tools:
+                    tools = db.query(Tool).filter(Tool.id.in_(agent.tools)).all()
+                    agent_tool_details = [
+                        {
+                            'id': tool.id,
+                            'name': tool.name,
+                            'description': tool.description,
+                            'tool_type': tool.tool_type,
+                            'category': tool.category,
+                            'langchain_tool_name': tool.langchain_tool_name,
+                            'crewai_tool_name': tool.crewai_tool_name,
+                            'python_code': tool.python_code
+                        }
+                        for tool in tools
+                    ]
+                
+                # Create a copy of agent with substituted variables and tool details
                 substituted_agent = {
                     'id': agent.id,
                     'name': agent.name,
                     'role': substitute_variables(agent.role, variables),
                     'goal': substitute_variables(agent.goal, variables),
                     'backstory': substitute_variables(agent.backstory, variables),
-                    'tools': agent.tools,
+                    'tools': agent_tool_details,
                     'llm_config': agent.llm_config
                 }
                 processed_agents.append(substituted_agent)
-                execution.console_log += f"  Agent '{agent.name}' processed with variable substitutions\n"
+                execution.console_log += f"  Agent '{agent.name}' processed with variable substitutions and {len(agent_tool_details)} tools\n"
             
             # Get task and apply variable substitution
             task = db.query(TaskModel).filter(TaskModel.id == step.get('task_id')).first()
             if task:
-                # Create a copy of task with substituted variables
+                # Get tools assigned to this step from process configuration
+                step_tools = step.get('tools', [])
+                
+                # Load actual tool details for the step tools
+                step_tool_details = []
+                if step_tools:
+                    tools = db.query(Tool).filter(Tool.id.in_(step_tools)).all()
+                    step_tool_details = [
+                        {
+                            'id': tool.id,
+                            'name': tool.name,
+                            'description': tool.description,
+                            'tool_type': tool.tool_type,
+                            'category': tool.category,
+                            'langchain_tool_name': tool.langchain_tool_name,
+                            'crewai_tool_name': tool.crewai_tool_name,
+                            'python_code': tool.python_code
+                        }
+                        for tool in tools
+                    ]
+                
+                # Merge step tools with task tools (step tools take precedence)
+                merged_tools = step_tool_details + (task.tools or [])
+                
+                # Create a copy of task with substituted variables and merged tools
                 substituted_task = {
                     'id': task.id,
                     'name': task.name,
                     'description': substitute_variables(task.description, variables),
                     'expected_output': substitute_variables(task.expected_output, variables),
-                    'tools': task.tools,
+                    'tools': merged_tools,
                     'context': task.context
                 }
                 processed_tasks.append(substituted_task)
-                execution.console_log += f"  Task '{task.name}' processed with variable substitutions\n"
+                execution.console_log += f"  Task '{task.name}' processed with variable substitutions and {len(step_tool_details)} step tools\n"
         
         # Log the processed configuration
         execution.console_log += "\nProcessed configuration with variable substitutions:\n"
