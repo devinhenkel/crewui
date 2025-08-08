@@ -121,17 +121,39 @@ def delete_process(process_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None
 
+from fastapi.responses import StreamingResponse
+from app.core.crewai_service import crewai_service
+
 @router.post("/{process_id}/execute", response_model=ExecutionResponse, status_code=status.HTTP_202_ACCEPTED)
-def execute_process(
+async def execute_process(
     process_id: int, 
     execution_request: ExecutionRequest,
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """Execute a process with variable substitution and CrewAI integration"""
     process = db.query(Process).filter(Process.id == process_id).first()
     if process is None:
         raise HTTPException(status_code=404, detail="Process not found")
+
+    # Create execution record
+    execution = Execution(
+        process_id=process_id,
+        status="running",
+        started_at=datetime.utcnow()
+    )
+    db.add(execution)
+    db.commit()
+    db.refresh(execution)
+
+    # Start streaming response
+    return StreamingResponse(
+        crewai_service.execute_process(
+            process=process,
+            execution_id=execution.id,
+            variables=execution_request.variables
+        ),
+        media_type="text/event-stream"
+    )
     
     # Create execution record
     execution = Execution(

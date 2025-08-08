@@ -1,14 +1,19 @@
 import { create } from 'zustand';
 import { Execution, ExecutionFilters } from '@/lib/api/executions';
 import { executionsApi } from '@/lib/api/executions';
+import { getApiUrl } from '@/lib/config';
 
 interface ExecutionStore {
   executions: Execution[];
   currentExecution: Execution | null;
   loading: boolean;
   error: string | null;
+  consoleOutput: string;
   
   // Actions
+  startExecution: (processId: number, variables?: Record<string, string>) => Promise<void>;
+  appendConsoleOutput: (output: string) => void;
+  clearConsoleOutput: () => void;
   fetchExecutions: (filters?: ExecutionFilters) => Promise<void>;
   fetchExecution: (id: number) => Promise<void>;
   fetchProcessExecutions: (processId: number) => Promise<void>;
@@ -24,6 +29,7 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
   currentExecution: null,
   loading: false,
   error: null,
+  consoleOutput: "",
 
   fetchExecutions: async (filters = {}) => {
     set({ loading: true, error: null });
@@ -121,5 +127,56 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
 
   clearError: () => {
     set({ error: null });
+  },
+
+  startExecution: async (processId: number, variables?: Record<string, string>) => {
+    set({ loading: true, error: null, consoleOutput: "" });
+    try {
+      const response = await fetch(`${getApiUrl()}/processes/${processId}/execute`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ variables: variables || {} }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start execution');
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('Failed to get response reader');
+      }
+
+      // Read the stream
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // Convert the chunk to text and append to console output
+        const text = new TextDecoder().decode(value);
+        set(state => ({
+          consoleOutput: state.consoleOutput + text
+        }));
+      }
+
+      set({ loading: false });
+    } catch (error) {
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to start execution',
+        loading: false 
+      });
+    }
+  },
+
+  appendConsoleOutput: (output: string) => {
+    set(state => ({
+      consoleOutput: state.consoleOutput + output
+    }));
+  },
+
+  clearConsoleOutput: () => {
+    set({ consoleOutput: "" });
   },
 })); 

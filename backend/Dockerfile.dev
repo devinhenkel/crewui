@@ -5,18 +5,16 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv
-RUN pip install uv
+# Copy requirements and install dependencies using pip to honor pinned versions
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy pyproject.toml and install dependencies
-COPY pyproject.toml .
-RUN uv sync --frozen
-
-# Copy application code
+# Copy remaining application code
 COPY . .
 
 # Create uploads directory
@@ -26,4 +24,4 @@ RUN mkdir -p uploads
 EXPOSE 8000
 
 # Default command
-CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"] 
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

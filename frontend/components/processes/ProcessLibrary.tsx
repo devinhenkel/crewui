@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Process, ProcessCreate, ProcessUpdate } from '@/types/process';
 import { useProcessStore } from '@/lib/stores/processStore';
+import { useExecutionStore } from '@/lib/stores/executionStore';
 import { ProcessForm } from './ProcessForm';
 import { ProcessBuilder } from './ProcessBuilder';
 import { ProcessCard } from './ProcessCard';
@@ -23,6 +24,8 @@ export function ProcessLibrary() {
     executeProcess,
     clearError,
   } = useProcessStore();
+
+  const { startExecution } = useExecutionStore();
 
   const [showForm, setShowForm] = useState(false);
   const [editingProcess, setEditingProcess] = useState<Process | null>(null);
@@ -60,9 +63,8 @@ export function ProcessLibrary() {
 
   const handleExecuteProcess = async (id: number, variables?: Record<string, string>) => {
     try {
-      const result = await executeProcess(id, variables);
-      console.log('Process execution started:', result);
-      return result;
+      await startExecution(id, variables);
+      return { success: true };
     } catch (error) {
       console.error('Failed to execute process:', error);
       throw error;

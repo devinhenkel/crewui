@@ -23,7 +23,7 @@ interface ExecutionMonitorProps {
 }
 
 export function ExecutionMonitor({ executionId, onClose }: ExecutionMonitorProps) {
-  const { currentExecution, fetchExecution, stopExecution, loading } = useExecutionStore();
+  const { currentExecution, fetchExecution, stopExecution, loading, consoleOutput } = useExecutionStore();
   const [autoRefresh, setAutoRefresh] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -147,37 +147,35 @@ export function ExecutionMonitor({ executionId, onClose }: ExecutionMonitorProps
           </div>
         )}
 
-        {currentExecution.console_log && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-sm font-medium">Console Log</h4>
-              <div className="flex space-x-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRefresh}
-                  disabled={loading}
-                >
-                  <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(currentExecution.console_log || '')}
-                  disabled={!currentExecution.console_log}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-md p-3 max-h-96 overflow-y-auto">
-              <pre className="text-xs text-gray-700 whitespace-pre-wrap">
-                {currentExecution.console_log}
-              </pre>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium">Console Log</h4>
+            <div className="flex space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => copyToClipboard(consoleOutput || currentExecution.console_log || '')}
+                disabled={!consoleOutput && !currentExecution.console_log}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
             </div>
           </div>
-        )}
+          
+          <div className="bg-gray-50 rounded-md p-3 max-h-96 overflow-y-auto">
+            <pre className="text-xs text-gray-700 whitespace-pre-wrap">
+              {consoleOutput || currentExecution.console_log || 'No output yet...'}
+            </pre>
+          </div>
+        </div>
 
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center space-x-2">

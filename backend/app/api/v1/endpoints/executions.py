@@ -120,7 +120,10 @@ def stop_execution(execution_id: int, db: Session = Depends(get_db)):
     
     execution.status = "stopped"
     execution.completed_at = datetime.utcnow()
-    execution.console_log += "\nExecution stopped by user.\n"
+    if execution.console_log is None:
+        execution.console_log = "Execution stopped by user.\n"
+    else:
+        execution.console_log += "\nExecution stopped by user.\n"
     db.commit()
     db.refresh(execution)
     
