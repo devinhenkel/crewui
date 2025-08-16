@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Eye, Play, GitBranch, ArrowRight, Settings } from 'lucide-react';
 import { VariableInputDialog } from './VariableInputDialog';
+import { StreamingExecutionModal } from './StreamingExecutionModal';
 
 interface ProcessCardProps {
   process: Process;
@@ -20,6 +21,8 @@ export function ProcessCard({ process, onEdit, onDelete, onView, onExecute, onCo
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showVariableDialog, setShowVariableDialog] = useState(false);
+  const [showStreamingModal, setShowStreamingModal] = useState(false);
+  const [executionVariables, setExecutionVariables] = useState<Record<string, string>>({});
 
   const handleDelete = async () => {
     if (window.confirm(`Are you sure you want to delete "${process.name}"?`)) {
@@ -37,17 +40,9 @@ export function ProcessCard({ process, onEdit, onDelete, onView, onExecute, onCo
   };
 
   const handleExecute = async (variables: Record<string, string>) => {
-    setIsExecuting(true);
-    try {
-      const result = await onExecute(process.id, variables);
-      console.log('Execution started:', result);
-      // You could navigate to the execution details here
-    } catch (error) {
-      console.error('Execution failed:', error);
-      throw error;
-    } finally {
-      setIsExecuting(false);
-    }
+    setExecutionVariables(variables);
+    setShowVariableDialog(false);
+    setShowStreamingModal(true);
   };
 
   const formatDate = (dateString: string) => {
@@ -198,6 +193,14 @@ export function ProcessCard({ process, onEdit, onDelete, onView, onExecute, onCo
         onClose={() => setShowVariableDialog(false)}
         onExecute={handleExecute}
         loading={isExecuting}
+      />
+
+      <StreamingExecutionModal
+        process={process}
+        isOpen={showStreamingModal}
+        onClose={() => setShowStreamingModal(false)}
+        variables={executionVariables}
+        autoStart={true}
       />
     </>
   );

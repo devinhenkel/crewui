@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ToolSelector } from '@/components/ui/tool-selector';
 import { X, Save, Plus } from 'lucide-react';
 
 const taskSchema = z.object({
@@ -29,6 +30,7 @@ interface TaskFormProps {
 
 export function TaskForm({ task, onSubmit, onCancel, loading = false }: TaskFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedTools, setSelectedTools] = useState<number[]>(task?.tools || []);
 
   const {
     register,
@@ -47,9 +49,14 @@ export function TaskForm({ task, onSubmit, onCancel, loading = false }: TaskForm
   const handleFormSubmit = async (data: TaskFormData) => {
     setIsSubmitting(true);
     try {
-      await onSubmit(data);
+      const taskData = {
+        ...data,
+        tools: selectedTools,
+      };
+      await onSubmit(taskData);
       if (!task) {
         reset();
+        setSelectedTools([]);
       }
     } catch (error) {
       console.error('Form submission error:', error);
@@ -121,6 +128,20 @@ export function TaskForm({ task, onSubmit, onCancel, loading = false }: TaskForm
             {errors.expected_output && (
               <p className="text-sm text-red-500">{errors.expected_output.message}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <ToolSelector
+              selectedTools={selectedTools}
+              onToolsChange={setSelectedTools}
+              label="Tools"
+              placeholder="Select tools for this task to use"
+              maxTools={5}
+              disabled={isSubmitting || loading}
+            />
+            <p className="text-xs text-gray-500">
+              Choose the tools this task will have access to during execution.
+            </p>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

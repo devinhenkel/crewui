@@ -3,7 +3,7 @@ export interface Task {
   name: string;
   description: string;
   expected_output: string;
-  tools: any[];
+  tools: number[]; // Array of tool IDs
   context: Record<string, any>;
   additional_params: Record<string, any>;
   created_at: string;
@@ -14,7 +14,7 @@ export interface TaskCreate {
   name: string;
   description: string;
   expected_output: string;
-  tools?: any[];
+  tools?: number[]; // Array of tool IDs
   context?: Record<string, any>;
   additional_params?: Record<string, any>;
 }
@@ -23,7 +23,7 @@ export interface TaskUpdate {
   name?: string;
   description?: string;
   expected_output?: string;
-  tools?: any[];
+  tools?: number[]; // Array of tool IDs
   context?: Record<string, any>;
   additional_params?: Record<string, any>;
 }

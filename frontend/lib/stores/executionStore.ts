@@ -130,9 +130,14 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
   },
 
   startExecution: async (processId: number, variables?: Record<string, string>) => {
+    console.log(`🚀 Frontend DEBUG: Starting execution for process ${processId}`, { variables });
     set({ loading: true, error: null, consoleOutput: "" });
+    
     try {
-      const response = await fetch(`${getApiUrl()}/processes/${processId}/execute`, {
+      const url = `${getApiUrl()}/processes/${processId}/execute`;
+      console.log(`🚀 Frontend DEBUG: Making request to ${url}`);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -140,29 +145,55 @@ export const useExecutionStore = create<ExecutionStore>((set, get) => ({
         body: JSON.stringify({ variables: variables || {} }),
       });
 
+      console.log(`🚀 Frontend DEBUG: Response status: ${response.status}`);
+      
       if (!response.ok) {
+        console.error(`❌ Frontend DEBUG: Response not ok: ${response.status} ${response.statusText}`);
         throw new Error('Failed to start execution');
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
+        console.error(`❌ Frontend DEBUG: Failed to get response reader`);
         throw new Error('Failed to get response reader');
       }
+
+      console.log(`✅ Frontend DEBUG: Starting to read stream...`);
+      let chunkCount = 0;
 
       // Read the stream
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log(`✅ Frontend DEBUG: Stream reading completed after ${chunkCount} chunks`);
+          break;
+        }
 
         // Convert the chunk to text and append to console output
         const text = new TextDecoder().decode(value);
-        set(state => ({
-          consoleOutput: state.consoleOutput + text
-        }));
+        chunkCount++;
+        console.log(`📦 Frontend DEBUG: Chunk ${chunkCount}: ${text.substring(0, 100)}...`);
+        
+        // Parse SSE format (data: content)
+        const lines = text.split('\n');
+        let content = '';
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            content += line.substring(6) + '\n';
+          }
+        }
+        
+        if (content) {
+          set(state => ({
+            consoleOutput: state.consoleOutput + content
+          }));
+        }
       }
 
       set({ loading: false });
+      console.log(`✅ Frontend DEBUG: Execution completed successfully`);
     } catch (error) {
+      console.error(`❌ Frontend DEBUG: Execution error:`, error);
       set({ 
         error: error instanceof Error ? error.message : 'Failed to start execution',
         loading: false 

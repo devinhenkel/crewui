@@ -124,60 +124,78 @@ def delete_process(process_id: int, db: Session = Depends(get_db)):
 from fastapi.responses import StreamingResponse
 from app.core.crewai_service import crewai_service
 
-@router.post("/{process_id}/execute", response_model=ExecutionResponse, status_code=status.HTTP_202_ACCEPTED)
+@router.post("/{process_id}/execute")
 async def execute_process(
     process_id: int, 
     execution_request: ExecutionRequest,
     db: Session = Depends(get_db)
 ):
     """Execute a process with variable substitution and CrewAI integration"""
+    print(f"🚀 DEBUG: Starting process execution for process_id: {process_id}")
+    print(f"🚀 DEBUG: Variables: {execution_request.variables}")
+    
     process = db.query(Process).filter(Process.id == process_id).first()
     if process is None:
+        print(f"❌ DEBUG: Process {process_id} not found")
         raise HTTPException(status_code=404, detail="Process not found")
+    
+    print(f"✅ DEBUG: Found process: {process.name}")
+    print(f"✅ DEBUG: Process configuration: {process.configuration}")
 
     # Create execution record
     execution = Execution(
         process_id=process_id,
         status="running",
-        started_at=datetime.utcnow()
+        started_at=datetime.utcnow(),
+        console_log="🚀 Starting process execution...\n"
     )
     db.add(execution)
     db.commit()
     db.refresh(execution)
+    
+    print(f"✅ DEBUG: Created execution record with ID: {execution.id}")
+
+    # Create a simple test generator first
+    async def test_stream():
+        import os
+
+        
+        # Check environment variables
+        openai_key = os.getenv('OPENAI_API_KEY', 'NOT_SET')
+        yield f"data: 🔍 OpenAI API Key status: {'SET' if openai_key != 'NOT_SET' and openai_key and openai_key != 'your-openai-api-key-here' else 'NOT_SET'}\n\n"
+        yield f"data: 🔍 OpenAI Key length: {len(openai_key) if openai_key != 'NOT_SET' else 0}\n\n"
+        
+        yield "data: 🚀 About to call CrewAI service...\n\n"
+        try:
+            yield f"data: 🔍 Calling crewai_service.execute_process...\n\n"
+            
+            # Create async generator and track its progress
+            generator = crewai_service.execute_process(
+                process=process,
+                execution_id=execution.id,
+                variables=execution_request.variables,
+                db=db
+            )
+            yield f"data: 🔍 Generator created successfully\n\n"
+            
+            chunk_count = 0
+            async for chunk in generator:
+                chunk_count += 1
+                yield f"data: 🔍 Received chunk {chunk_count}: {chunk[:50]}...\n\n"
+                yield f"data: {chunk}\n\n"
+                
+            yield f"data: ✅ CrewAI service completed normally (received {chunk_count} chunks)\n\n"
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            yield f"data: ❌ ERROR in streaming: {str(e)}\n\n"
+            yield f"data: 🔍 Full traceback: {error_details}\n\n"
+        yield "data: ✅ Streaming completed\n\n"
 
     # Start streaming response
     return StreamingResponse(
-        crewai_service.execute_process(
-            process=process,
-            execution_id=execution.id,
-            variables=execution_request.variables
-        ),
+        test_stream(),
         media_type="text/event-stream"
-    )
-    
-    # Create execution record
-    execution = Execution(
-        process_id=process_id,
-        status="running",
-        console_log="Starting process execution...\n"
-    )
-    db.add(execution)
-    db.commit()
-    db.refresh(execution)
-    
-    # Start background execution
-    background_tasks.add_task(
-        run_crewai_process,
-        execution.id,
-        process.configuration,
-        execution_request.variables,
-        db
-    )
-    
-    return ExecutionResponse(
-        execution_id=execution.id,
-        message="Process execution started",
-        status="running"
     )
 
 async def run_crewai_process(execution_id: int, configuration: dict, variables: Dict[str, str], db: Session):

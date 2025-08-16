@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { ToolSelector } from '@/components/ui/tool-selector';
 import { useAgentStore } from '@/lib/stores/agentStore';
 
 const agentSchema = z.object({
@@ -29,6 +30,7 @@ interface AgentFormProps {
 
 export function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedTools, setSelectedTools] = useState<number[]>(agent?.tools || []);
   const { createAgent, updateAgent } = useAgentStore();
   
   const {
@@ -54,12 +56,18 @@ export function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps) {
   const onSubmit = async (data: AgentFormData) => {
     setIsSubmitting(true);
     try {
+      const agentData = {
+        ...data,
+        tools: selectedTools,
+      };
+      
       if (agent) {
-        await updateAgent(agent.id, data);
+        await updateAgent(agent.id, agentData);
       } else {
-        await createAgent(data);
+        await createAgent(agentData);
       }
       reset();
+      setSelectedTools([]);
       onSuccess?.();
     } catch (error) {
       console.error('Failed to save agent:', error);
@@ -130,6 +138,20 @@ export function AgentForm({ agent, onSuccess, onCancel }: AgentFormProps) {
             {errors.backstory && (
               <p className="text-sm text-red-500">{errors.backstory.message}</p>
             )}
+          </div>
+
+          <div className="space-y-2">
+            <ToolSelector
+              selectedTools={selectedTools}
+              onToolsChange={setSelectedTools}
+              label="Tools"
+              placeholder="Select tools for this agent to use"
+              maxTools={10}
+              disabled={isSubmitting}
+            />
+            <p className="text-xs text-gray-500">
+              Choose the tools this agent will have access to during execution.
+            </p>
           </div>
 
           <div className="flex justify-end space-x-2">

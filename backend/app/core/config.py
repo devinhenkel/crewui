@@ -1,8 +1,14 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 import os
 
 class Settings(BaseSettings):
+    # Pydantic v2 settings config
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",  # Ignore unknown env vars like OTEL_SDK_DISABLED
+    )
     # Database
     DATABASE_URL: str = "sqlite:///./crewui.db"
     
@@ -38,8 +44,4 @@ class Settings(BaseSettings):
     # Logging
     LOG_LEVEL: str = "INFO"
     
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
-
 settings = Settings() 

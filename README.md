@@ -65,19 +65,27 @@ A full-stack web application that enables users to visually configure, manage, a
    ```
 
 3. **Start the development environment:**
+
+   **Important: Follow these steps in order for proper startup:**
+
    ```bash
-   # Using Docker Compose (recommended)
-   docker-compose up -d
-   
-   # Or start services individually
-   # Start PostgreSQL and Redis
+   # Step 1: Start Docker services (PostgreSQL and Redis)
    docker-compose up -d postgres redis
    
-   # Start backend
-   cd backend && uvicorn main:app --reload
+   # Step 2: Start the backend
+   cd backend
+   source .venv/bin/activate
+   uv run python main.py
    
-   # Start frontend
-   cd frontend && npm run dev
+   # Step 3: Start the frontend (in a new terminal)
+   cd frontend
+   npm run dev
+   ```
+
+   **Alternative: Using Docker Compose for everything:**
+   ```bash
+   # Start all services at once (if you prefer containerized development)
+   docker-compose up -d
    ```
 
 4. **Access the application:**
@@ -111,14 +119,50 @@ crewui/
    - Hot reload enabled
 
 2. **Backend Development:**
-   - Run `uv run uvicorn main:app --reload` in the backend directory
+   - First activate the virtual environment: `source .venv/bin/activate`
+   - Run `uv run python main.py` in the backend directory
    - Access API at http://localhost:8000
-   - Auto-reload on code changes
+   - Manual restart required for code changes (or use uvicorn directly for auto-reload)
 
 3. **Database:**
    - PostgreSQL runs on port 5432
    - Redis runs on port 6379
    - Use Docker Compose for easy setup
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Backend fails with "ModuleNotFoundError: No module named 'crewai'"**
+   - Ensure you've activated the virtual environment: `source .venv/bin/activate`
+   - Install dependencies: `uv sync`
+
+2. **Frontend shows "net::ERR_CONNECTION_REFUSED"**
+   - Ensure Docker services are running: `docker-compose up -d postgres redis`
+   - Check if backend is running on port 8000: `curl http://localhost:8000/health`
+
+3. **Python path configuration errors**
+   - Use `uv run python main.py` instead of direct python execution
+   - Ensure you're in the backend directory when running commands
+
+4. **Port conflicts**
+   - Backend runs on port 8000
+   - Frontend runs on port 3000
+   - PostgreSQL runs on port 5432
+   - Redis runs on port 6379
+
+### Quick Reset
+If you encounter persistent issues, try this reset sequence:
+```bash
+# Stop all processes
+pkill -f "python main.py"
+docker-compose down
+
+# Restart everything
+docker-compose up -d postgres redis
+cd backend && source .venv/bin/activate && uv run python main.py &
+cd frontend && npm run dev
+```
 
 ## Contributing
 

@@ -4,7 +4,7 @@ export interface Agent {
   role: string;
   goal: string;
   backstory: string;
-  tools: any[];
+  tools: number[]; // Array of tool IDs
   llm_config: Record<string, any>;
   additional_params: Record<string, any>;
   created_at: string;
@@ -16,7 +16,7 @@ export interface AgentCreate {
   role: string;
   goal: string;
   backstory: string;
-  tools?: any[];
+  tools?: number[]; // Array of tool IDs
   llm_config?: Record<string, any>;
   additional_params?: Record<string, any>;
 }
@@ -26,7 +26,7 @@ export interface AgentUpdate {
   role?: string;
   goal?: string;
   backstory?: string;
-  tools?: any[];
+  tools?: number[]; // Array of tool IDs
   llm_config?: Record<string, any>;
   additional_params?: Record<string, any>;
 }

@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Task } from '@/types/task';
+import { Tool } from '@/types/tool';
+import { toolsApi } from '@/lib/api/tools';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Eye } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Edit, Trash2, Eye, Wrench } from 'lucide-react';
 
 interface TaskCardProps {
   task: Task;
@@ -15,6 +18,28 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onEdit, onDelete, onView }: TaskCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [tools, setTools] = useState<Tool[]>([]);
+  const [loadingTools, setLoadingTools] = useState(false);
+
+  useEffect(() => {
+    if (task.tools && task.tools.length > 0) {
+      loadTools();
+    }
+  }, [task.tools]);
+
+  const loadTools = async () => {
+    setLoadingTools(true);
+    try {
+      // Load all tools and filter by the task's tool IDs
+      const allTools = await toolsApi.getTools();
+      const taskTools = allTools.filter(tool => task.tools.includes(tool.id));
+      setTools(taskTools);
+    } catch (error) {
+      console.error('Failed to load tools:', error);
+    } finally {
+      setLoadingTools(false);
+    }
+  };
 
   const handleDelete = async () => {
     if (window.confirm(`Are you sure you want to delete "${task.name}"?`)) {
@@ -101,22 +126,36 @@ export function TaskCard({ task, onEdit, onDelete, onView }: TaskCardProps) {
 
           {task.tools && task.tools.length > 0 && (
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-1">Tools</h4>
-              <div className="flex flex-wrap gap-1">
-                {task.tools.slice(0, 3).map((tool, index) => (
-                  <span
-                    key={index}
-                    className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
-                  >
-                    {typeof tool === 'string' ? tool : 'Tool'}
-                  </span>
-                ))}
-                {task.tools.length > 3 && (
-                  <span className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
-                    +{task.tools.length - 3} more
-                  </span>
-                )}
-              </div>
+              <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                <Wrench className="h-3 w-3 mr-1" />
+                Tools ({task.tools.length})
+              </h4>
+              {loadingTools ? (
+                <div className="flex items-center space-x-1">
+                  <div className="animate-spin rounded-full h-3 w-3 border-b border-gray-900"></div>
+                  <span className="text-xs text-gray-500">Loading tools...</span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-1">
+                  {tools.slice(0, 3).map((tool) => (
+                    <Badge 
+                      key={tool.id} 
+                      variant="outline" 
+                      className="text-xs px-2 py-0.5"
+                    >
+                      {tool.name}
+                    </Badge>
+                  ))}
+                  {tools.length > 3 && (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5 bg-gray-100">
+                      +{tools.length - 3} more
+                    </Badge>
+                  )}
+                  {tools.length === 0 && !loadingTools && (
+                    <span className="text-xs text-gray-400">No tools found</span>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
